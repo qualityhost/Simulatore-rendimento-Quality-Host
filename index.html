@@ -30,6 +30,13 @@
         .toggle-checkbox:checked + .toggle-label {
             background-color: #5A8A7B;
         }
+        /* Stili per la finestra modale */
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+        .modal-content {
+            max-height: 80vh;
+        }
     </style>
 </head>
 <body>
@@ -168,7 +175,7 @@
                         </div>
                         <div id="tax_params" class="mt-4 space-y-4">
                             <div id="cedolare_params">
-                                <label for="aliquotaCedolare" class="block text-sm font-medium text-gray-700">Cedolare Secca (%)</label>
+                                <label for="aliquotaCedolare" class="block text-sm font-medium text-gray-700">Aliquota Cedolare Secca (%)</label>
                                 <input type="number" id="aliquotaCedolare" value="21" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
                             </div>
                             <div id="forfettario_params" class="hidden">
@@ -178,13 +185,13 @@
                                         <input type="number" id="coeffRedditivita" value="40" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
                                     </div>
                                     <div>
-                                        <label for="aliquotaForfettaria" class="block text-sm font-medium text-gray-700">Aliquota sostitutiva (%)</label>
+                                        <label for="aliquotaForfettaria" class="block text-sm font-medium text-gray-700">Aliquota Sostitutiva (%)</label>
                                         <input type="number" id="aliquotaForfettaria" value="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
                                     </div>
                                 </div>
                             </div>
                             <div id="ordinario_params" class="hidden">
-                                <label for="aliquotaIrpef" class="block text-sm font-medium text-gray-700">Aliquota media (%)</label>
+                                <label for="aliquotaIrpef" class="block text-sm font-medium text-gray-700">Aliquota Media IRPEF (%)</label>
                                 <input type="number" id="aliquotaIrpef" value="35" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
                             </div>
                         </div>
@@ -405,6 +412,7 @@
 
             let guadagnoPmSingle = 0;
             let marginePulizieProprietarioSingle = incassoPulizieOspiteSingle - costiRealiPulizieSingle;
+            
             let utileLordoProprietario_before_fixed_single, baseImponibileTasseSingle;
 
             if (values.pmToggle) {
@@ -443,6 +451,7 @@
 
             const tassazioneTotale = tassazioneSingle * numeroProprieta;
             const utileNettoTotale = utileLordoProprietarioTotale - tassazioneTotale;
+            
             const investimentoTotale = isMulti ? values.investimento : values.investimento * numeroProprieta;
             const roi = (investimentoTotale > 0) ? (utileNettoTotale / investimentoTotale) * 100 : 0;
             
@@ -474,6 +483,7 @@
                 roi: roi,
                 inputs: values 
             };
+
 
             uiElements.ricavoLordo.textContent = formatCurrency(lastResults.ricavoLordo);
             uiElements.occupazioneCalcolata.textContent = `${lastResults.notti.toFixed(0)} / ${lastResults.prenotazioni.toFixed(0)}`;
@@ -513,7 +523,8 @@
             doc.text("Parametri Principali", 14, y);
             y += 8;
             doc.setFontSize(10);
-            doc.text(`Investimento Totale: ${formatCurrency(inputs.investimento)}`, 14, y);
+            const investimento_pdf = inputs.multiProprietaToggle ? inputs.investimento : inputs.investimento * (inputs.numeroProprieta || 1)
+            doc.text(`Investimento Totale: ${formatCurrency(investimento_pdf)}`, 14, y);
             y += 6;
             if (inputs.multiProprietaToggle) {
                 doc.text(`Numero di Proprietà: ${inputs.numeroProprieta}`, 14, y);
@@ -578,6 +589,7 @@
 
             doc.save("Report_Simulazione_QualityHost.pdf");
         }
+
 
         Object.values(allInputs).forEach(el => el.addEventListener('input', calculateROI));
         taxRadios.forEach(radio => radio.addEventListener('change', () => {

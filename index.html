@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it">
+html lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -211,6 +211,13 @@
                                 <span class="text-sm font-medium text-gray-600">Notti / Prenotazioni:</span>
                                 <span id="occupazioneCalcolata" class="text-md font-semibold text-gray-800"></span>
                             </div>
+                             <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Incidenza Costi Variabili</p>
+                                    <p class="text-xs text-gray-500 -mt-1">(non comprese commissioni ota)</p>
+                                </div>
+                                <span id="incidenzaCostiVariabili" class="text-md font-semibold text-gray-800"></span>
+                            </div>
                             <div id="pmGuadagnoSection" class="hidden flex justify-between items-center">
                                 <span class="text-sm font-medium text-gray-600">Guadagno PM:</span>
                                 <span id="guadagnoPm" class="text-md font-semibold text-blue-600"></span>
@@ -226,10 +233,6 @@
                              <div class="flex justify-between items-center">
                                 <span class="text-sm font-medium text-gray-600">Totale Costi Operativi:</span>
                                 <span id="totaleCosti" class="text-md font-semibold text-red-600"></span>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm font-medium text-gray-600">Incidenza Costi Variabili:</span>
-                                <span id="incidenzaCostiVariabili" class="text-md font-semibold text-gray-800"></span>
                             </div>
                              <div class="flex justify-between items-center">
                                 <span class="text-sm font-medium text-gray-600">Tassazione Stimata:</span>
@@ -282,6 +285,10 @@
                     <p>Il numero totale di notti in cui la struttura è occupata e il numero totale di soggiorni (check-in) effettuati nel periodo di apertura selezionato.</p>
                 </div>
                  <div>
+                    <h4 class="font-semibold text-gray-800">Incidenza Costi Variabili</h4>
+                    <p>Indica la percentuale del Ricavo Lordo assorbita dai costi operativi variabili, <strong>escluse le commissioni OTA</strong>. La formula è: <code>(Costi Variabili - Commissioni OTA) / Ricavo Lordo * 100</code>.</p>
+                </div>
+                 <div>
                     <h4 class="font-semibold text-gray-800">Guadagno PM</h4>
                     <p>Il compenso totale del Property Manager, dato dalla somma della sua commissione di gestione e del suo margine (profitto o perdita) sulla gestione delle pulizie.</p>
                 </div>
@@ -298,20 +305,16 @@
                     <p>La somma di tutte le spese annuali necessarie per l'attività: commissioni OTA, utenze, costi fissi e, se presente, il compenso del Property Manager.</p>
                 </div>
                  <div>
-                    <h4 class="font-semibold text-gray-800">Incidenza Costi Variabili</h4>
-                    <p>La percentuale del Ricavo Lordo Annuo che viene assorbita dai costi variabili. Ti aiuta a capire quanto "pesano" le spese operative sul totale incassato.</p>
-                </div>
-                 <div>
                     <h4 class="font-semibold text-gray-800">Tassazione Stimata</h4>
                     <p>L'importo stimato delle tasse da pagare, calcolato in base al regime fiscale selezionato e alla relativa base imponibile.</p>
                 </div>
                 <div>
                     <h4 class="font-semibold text-gray-800">Utile Netto Annuo</h4>
-                    <p>Il guadagno reale, calcolato come `Ricavo Lordo Annuo - Totale Costi Operativi - Tassazione Stimata`.</p>
+                    <p>Il guadagno reale, calcolato sottraendo dal tuo ricavo effettivo tutti i costi a tuo carico (fissi e utenze) e le tasse.</p>
                 </div>
                  <div>
                     <h4 class="font-semibold text-gray-800">ROI Stimato</h4>
-                    <p>Il Ritorno sull'Investimento. Indica la redditività percentuale del tuo capitale investito, calcolato come `(Utile Netto Annuo / Investimento Totale) * 100`.</p>
+                    <p>Il Ritorno sull'Investimento. Indica la redditività percentuale del tuo capitale investito, calcolato come `(Utile Netto Annuo Totale / Investimento Totale) * 100`.</p>
                 </div>
             </div>
         </div>
@@ -461,14 +464,21 @@
 
             let costiVariabiliPerIncidenza;
             if (values.pmToggle) {
-                costiVariabiliPerIncidenza = (commissioniOtaSingle + utenzeSingle) * numeroProprieta + guadagnoPmTotaleUI;
+                costiVariabiliPerIncidenza = (utenzeSingle * numeroProprieta) + guadagnoPmTotaleUI;
             } else {
-                costiVariabiliPerIncidenza = (commissioniOtaSingle + utenzeSingle + costiRealiPulizieSingle) * numeroProprieta;
+                costiVariabiliPerIncidenza = (utenzeSingle + costiRealiPulizieSingle) * numeroProprieta;
             }
             const incidenzaCostiVariabili = (ricavoLordoTotale > 0) ? (costiVariabiliPerIncidenza / ricavoLordoTotale) * 100 : 0;
             
-            let totaleCostiVisibile = costiVariabiliPerIncidenza + (isMulti ? costiFissi : costiFissi * numeroProprieta);
-
+            let totaleCostiVisibile;
+            if (isMulti) {
+                const costiVariabiliTotali = (commissioniOtaSingle + (values.pmToggle ? 0 : costiRealiPulizieSingle) + utenzeSingle) * numeroProprieta;
+                const pmCostTotal = values.pmToggle ? guadagnoPmTotaleUI : 0;
+                totaleCostiVisibile = costiVariabiliTotali + costiFissi + pmCostTotal;
+            } else {
+                totaleCostiVisibile = commissioniOtaSingle + (values.pmToggle ? 0 : costiRealiPulizieSingle) + utenzeSingle + costiFissi + (values.pmToggle ? guadagnoPmSingle : 0);
+            }
+            
             lastResults = {
                 ricavoLordo: ricavoLordoTotale,
                 notti: nottiPrenotateSingle * numeroProprieta,
@@ -565,7 +575,7 @@
             }
             doc.text(`Totale Costi Operativi: ${formatCurrency(results.totaleCosti)}`, 14, y);
             y += 6;
-            doc.text(`Incidenza Costi Variabili: ${results.incidenzaCostiVariabili.toFixed(2)}%`, 14, y);
+            doc.text(`Incidenza Costi Variabili (non comprese OTA): ${results.incidenzaCostiVariabili.toFixed(2)}%`, 14, y);
             y+=10;
 
             doc.setFontSize(12);
